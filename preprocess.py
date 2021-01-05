@@ -83,17 +83,17 @@ def temp_func(inputt):
     return extract_hashtags(x)
 
 # inputt = ' @BonesFan021 #hashhg_of_words  I can\'t @BonesFan hear it! &quot;Big &amp; Rich - Between Raising Hell and Amazing Grace&quot;  The story of my life  â™« http://blip.fm/~7hdp9'
-inputt = '&quot;pigs didn\'t start the swine flu...&quot; &quot;we didn\'t do anythingggg wrong!&quot; ... wie sï¿½ï¿½. '
+# inputt = '&quot;pigs didn\'t start the swine flu...&quot; &quot;we didn\'t do anythingggg wrong!&quot; ... wie sï¿½ï¿½. '
 # x = normalize_case(input)
-x= replace_dots_with_space(inputt)
+# x= replace_dots_with_space(inputt)
 # x = remove_quot(x)
-x = replace_abbreviation(x)
-x = reduce_duplicate_last_letter(x)
-x = remove_html_entities(x)
-x = remove_urls(x)
-x = remove_mentions(x)
-x = extract_hashtags(x)
-print(x)
+# x = replace_abbreviation(x)
+# x = reduce_duplicate_last_letter(x)
+# x = remove_html_entities(x)
+# x = remove_urls(x)
+# x = remove_mentions(x)
+# x = extract_hashtags(x)
+# print(x)
 # Strip spaces and quotes (" and ’) from the ends of tweet
 # Replace 2 or more spaces with a single space
 
@@ -124,5 +124,5 @@ print(x)
 # lemmatize
 
 # stem
-nltk.download('punkt')
-tokens = nltk.word_tokenize(x)
+# nltk.download('punkt')
+# tokens = nltk.word_tokenize(x)
