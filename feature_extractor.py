@@ -68,8 +68,4 @@ def create_features_for_tweet_df(tweet_df):
     return tweets_features
 
 
-tweets_df = pd.read_csv('/Users/shaharfreiman/Desktop/Degree/Y4S1/Principles of Programming Languages/Assignments/Assignment3/2020-ppl3/Train.csv', encoding="ISO-8859-1")
-df = create_features_for_tweet_df(tweets_df)
-print(df)
-
 
