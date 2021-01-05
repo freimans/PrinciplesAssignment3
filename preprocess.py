@@ -1,14 +1,14 @@
 import pandas as pd
 import numpy as np
 import regex as re
-import multiprocessing
-import nltk
-from multiprocessing import Pool
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+from nltk.stem.porter import PorterStemmer
 
+stemmer = PorterStemmer()
+lemmatizer = WordNetLemmatizer()
+stoplist = stopwords.words('english')
 
-# from segmenter import Analyzer
-# from nltk.stem import WordNetLemmatizer
-# from nltk.stem.porter import PorterStemmer
 
 def normalize_case(tweet):
     """
@@ -25,10 +25,7 @@ def replace_dots_with_space(tweet):
 
 
 def remove_html_entities(tweet):
-    tweet = re.sub(r"&gt;", "", tweet)
-    tweet = re.sub(r"&lt;", "", tweet)
-    tweet = re.sub(r"&amp;", "", tweet)
-    tweet = re.sub(r"&quot;", "", tweet)
+    tweet = re.sub(r"&(\w)+;", "", tweet)
     return tweet
 
 
@@ -46,12 +43,13 @@ def remove_urls(tweet):
     return re.sub(r'((www\.[\S]+)|(https?://[\S]+)).', "", tweet)
 
 
-def remove_mentions(tweet):
-    return re.sub( r'@(\S+)', ' MENTION', tweet )
+def replace_mentions(tweet):
+    return re.sub(r'@(\S+)', ' MENTION', tweet)
 
 
 def extract_hashtags(tweet):
     return tweet.replace("#", "").replace("_", " ")
+
 
 def replace_abbreviation(tweet):
     tweet = re.sub(r"i\'m", "i am", tweet)
@@ -68,8 +66,40 @@ def replace_abbreviation(tweet):
     return tweet
 
 
+def emphasize_exclamation(tweet):
+    tweet = re.sub("(\w+)!+", r'\1 \1', tweet)
+    return tweet
+
+
+def remove_stopwords(tweet):
+    words = tweet.split()
+    for i,w in enumerate(words):
+        if w in stoplist:
+            words[i] = ''
+    return ' '.join(x for x in words if x)
+
+
 def remove_non_letters(tweet):
-    return
+    tweet = re.sub('[^a-zA-Z]+', ' ', tweet)
+    return tweet
+
+
+def lemmatize_word(word):
+    try:
+        lemmatized = lemmatizer.lemmatize(word).lower()
+        return lemmatized
+    except Exception as e:
+        return word
+
+
+def lemmatize_tweet(tweet):
+    lemmatized = [lemmatize_word(w.lower()) for w in tweet.split()]
+    return " ".join(lemmatized)
+
+
+def stem_tweet(tweet):
+    stemmed = [stemmer.stem(w) for w in tweet.split()]
+    return " ".join(stemmed)
 
 
 def temp_func(inputt):
@@ -79,50 +109,36 @@ def temp_func(inputt):
     x = reduce_duplicate_last_letter(x)
     x = remove_html_entities(x)
     x = remove_urls(x)
-    x = remove_mentions(x)
+    x = replace_mentions(x)
     return extract_hashtags(x)
 
+
+def preprocess(tweet, isStem, isLemmatize):
+    clean_tweet = normalize_case(tweet)
+    clean_tweet = replace_dots_with_space(clean_tweet)
+    clean_tweet = remove_html_entities(clean_tweet)
+    clean_tweet = reduce_duplicate_last_letter(clean_tweet)
+    clean_tweet = remove_urls(clean_tweet)
+    clean_tweet = replace_mentions(clean_tweet)
+    clean_tweet = extract_hashtags(clean_tweet)
+    clean_tweet = replace_abbreviation(clean_tweet)
+    clean_tweet = remove_quot(clean_tweet)
+    clean_tweet = emphasize_exclamation(clean_tweet)
+    clean_tweet = remove_stopwords(clean_tweet)
+    clean_tweet = remove_non_letters(clean_tweet)
+    if isStem:
+        clean_tweet = stem_tweet(clean_tweet)
+    if isLemmatize:
+        clean_tweet = lemmatize_tweet(clean_tweet)
+
+    return extract_hashtags(clean_tweet)
+
+
 # inputt = ' @BonesFan021 #hashhg_of_words  I can\'t @BonesFan hear it! &quot;Big &amp; Rich - Between Raising Hell and Amazing Grace&quot;  The story of my life  â™« http://blip.fm/~7hdp9'
-inputt = '&quot;pigs didn\'t start the swine flu...&quot; &quot;we didn\'t do anythingggg wrong!&quot; ... wie sï¿½ï¿½. '
-# x = normalize_case(input)
-x= replace_dots_with_space(inputt)
-# x = remove_quot(x)
-x = replace_abbreviation(x)
-x = reduce_duplicate_last_letter(x)
-x = remove_html_entities(x)
-x = remove_urls(x)
-x = remove_mentions(x)
-x = extract_hashtags(x)
-print(x)
-# Strip spaces and quotes (" and ’) from the ends of tweet
-# Replace 2 or more spaces with a single space
+inputt = '&quot;pigs didn\'t start the swine flu...&quot; &quot; we didn\'t do anythingggg wrong!&quot; ... wie sï¿½ï¿½. '
 
-# TODO twitter feature pre process
-
-
-# replace URLs with 'URL'
-# regex for url - s ((www\.[\S]+)|(https?://[\S]+)).
-
-# remove numbers
-
-# replace mentions with 'USER_MENTION'
-# regex  -  @[\S]+. 2
-
-# replace emotions with EMO_POS EMO_NEG
-# regex table in https://arxiv.org/ftp/arxiv/papers/1807/1807.07752.pdf
-
-# remove hashtag  # stmbol and split words of it
-# regex -  #(\S+).
-
-# remove Retweet RT
-# regex - \brt\b.
-
-# TODO NLTK function
-
-# remove stop words
-
-# lemmatize
+print(preprocess(inputt, False, False))
 
 # stem
-nltk.download('punkt')
-tokens = nltk.word_tokenize(x)
+# nltk.download('punkt')
+# tokens = nltk.word_tokenize(x)
