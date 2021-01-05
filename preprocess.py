@@ -131,7 +131,7 @@ def preprocess(tweet, isStem, isLemmatize):
     if isLemmatize:
         clean_tweet = lemmatize_tweet(clean_tweet)
 
-    return extract_hashtags(clean_tweet)
+    return clean_tweet
 
 
 # inputt = ' @BonesFan021 #hashhg_of_words  I can\'t @BonesFan hear it! &quot;Big &amp; Rich - Between Raising Hell and Amazing Grace&quot;  The story of my life  â™« http://blip.fm/~7hdp9'
