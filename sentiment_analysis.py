@@ -11,34 +11,23 @@ import params
 from sklearn import model_selection
 
 
-def get_train_test_data(data):
-
-    X = data[params.features]
-    Y = list(data['sentiment'])
-
-    return model_selection.train_test_split(X, Y, test_size=params.val_size, random_state=params.seed)
-
-
-
 def get_models():
     models = []
     models.append(('LR', LogisticRegression(solver='liblinear', multi_class='ovr')))
     models.append(('LDA', LinearDiscriminantAnalysis()))
-    models.append(('KNN', KNeighborsClassifier()))
-    models.append(('CART', DecisionTreeClassifier()))
     models.append(('NB', GaussianNB()))
-    models.append(('SVM', SVC(gamma='auto')))
     return models
 
 
 data = None
-if not params.is_feature_extractor:
-    data = pd.read_csv(params.processed_data_path, index_col=False)
+raw_data = pd.read_csv(params.raw_data_path, encoding="ISO-8859-1")
+x_train, x_test, y_train, y_test = model_selection.train_test_split(raw_data['SentimentText'], raw_data['Sentiment'], test_size=params.val_size, random_state=params.seed)
+if params.is_feature_extractor:
+    x_train = fe.create_features_for_tweet_df(x_train)
+    x_test = fe.create_features_for_tweet_df(x_test)
 else:
-    raw_data = pd.read_csv(params.raw_data_path, encoding="ISO-8859-1")
-    data = fe.create_features_for_tweet_df(raw_data)
-
-x_train, x_test, y_train, y_test = get_train_test_data(data)
+    x_train = pd.read_csv(params.processed_train_data_path)
+    x_test = pd.read_csv(params.processed_test_data_path)
 
 models = get_models()
 

@@ -1,10 +1,14 @@
 import pandas as pd
 import numpy as np
 import regex as re
+import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.stem.porter import PorterStemmer
 
+import params
+
+nltk.download('stopwords')
 stemmer = PorterStemmer()
 lemmatizer = WordNetLemmatizer()
 stoplist = stopwords.words('english')
@@ -102,18 +106,7 @@ def stem_tweet(tweet):
     return " ".join(stemmed)
 
 
-def temp_func(inputt):
-    x = replace_dots_with_space(inputt)
-
-    x = replace_abbreviation(x)
-    x = reduce_duplicate_last_letter(x)
-    x = remove_html_entities(x)
-    x = remove_urls(x)
-    x = replace_mentions(x)
-    return extract_hashtags(x)
-
-
-def preprocess(tweet, isStem, isLemmatize):
+def preprocess(tweet):
     clean_tweet = normalize_case(tweet)
     clean_tweet = replace_dots_with_space(clean_tweet)
     clean_tweet = remove_html_entities(clean_tweet)
@@ -126,18 +119,18 @@ def preprocess(tweet, isStem, isLemmatize):
     clean_tweet = emphasize_exclamation(clean_tweet)
     clean_tweet = remove_stopwords(clean_tweet)
     clean_tweet = remove_non_letters(clean_tweet)
-    if isStem:
+    if params.is_stem:
         clean_tweet = stem_tweet(clean_tweet)
-    if isLemmatize:
+    if params.is_lemmatize:
         clean_tweet = lemmatize_tweet(clean_tweet)
 
     return clean_tweet
 
 
 # inputt = ' @BonesFan021 #hashhg_of_words  I can\'t @BonesFan hear it! &quot;Big &amp; Rich - Between Raising Hell and Amazing Grace&quot;  The story of my life  â™« http://blip.fm/~7hdp9'
-inputt = '&quot;pigs didn\'t start the swine flu...&quot; &quot; we didn\'t do anythingggg wrong!&quot; ... wie sï¿½ï¿½. '
+# inputt = '&quot;pigs didn\'t start the swine flu...&quot; &quot; we didn\'t do anythingggg wrong!&quot; ... wie sï¿½ï¿½. '
 
-print(preprocess(inputt, False, False))
+# print(preprocess(inputt, False, False))
 
 # stem
 # nltk.download('punkt')

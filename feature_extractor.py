@@ -1,7 +1,10 @@
 import nltk
 import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
 
+import params
 import preprocess
+import numpy as np
 
 
 def create_features_from_tweet(tweet, emot_analysis_intensity, emotion_analysis, twitter_word_intensity, good_list, bad_list):
@@ -52,20 +55,36 @@ def create_features_for_tweet_df(tweet_df):
     bad_list = set(open('/Users/shaharfreiman/Desktop/Degree/Y4S1/Principles of Programming Languages/Assignments/Assignment3/words_dictionary/negative-words.txt', encoding="ISO-8859-1").readlines())
     twitter_word_intensity = pd.read_csv('/Users/shaharfreiman/Desktop/Degree/Y4S1/Principles of Programming Languages/Assignments/Assignment3/words_dictionary/twitter words to sentiment.txt', sep='\t', names=['intensity', 'word'])
 
-    tweets_features = pd.DataFrame(columns=('anger', 'anticipation', 'disgust', 'fear', 'joy', 'negative', 'positive', 'sadness', 'surprise', 'trust', 'tweet', 'sentiment'))
-    df_length = len(tweet_df)
-    print(df_length)
-    for index, tweet in tweet_df.iterrows():
-        if index % 1000 == 0:
-            print('{}/{}'.format(index,df_length))
-        tweet_text = tweet['SentimentText']
-        tweet_sentiment = tweet['Sentiment']
-        tweet_text = preprocess.temp_func(tweet_text)
+
+    tweets_features = pd.DataFrame(columns=('anger', 'anticipation', 'disgust', 'fear', 'joy', 'negative', 'positive', 'sadness', 'surprise', 'trust'))
+
+    proccessed_tweets = []
+    i = 0
+    for tweet in tweet_df:
+        if i % 1000 == 0:
+            print('{}/{}'.format(i, len(tweet_df)))
+        tweet_text = preprocess.preprocess(tweet)
+        proccessed_tweets.append(tweet_text)
         tweet_feature = create_features_from_tweet(tweet_text, emot_analysis_intensity, emot_analysis, twitter_word_intensity, good_list, bad_list)
-        tweet_feature['tweet'] = tweet_text
-        tweet_feature['sentiment'] = tweet_sentiment
         tweets_features = tweets_features.append(tweet_feature)
-    return tweets_features
+        i+=1
+
+    # build TFIDF features on train reviews
+    tv = TfidfVectorizer(use_idf=True, min_df=0.0, max_df=1.0, ngram_range=(1, 2), sublinear_tf=True, max_features=2000)
+    tf_idf = tv.fit_transform(tweet_df)
+    tfidf_features = pd.DataFrame(tf_idf.toarray())
+
+    tweets_features.index = np.arange(0, len(tweets_features))
+
+    for column in tweets_features:
+        tfidf_features[column] = tweets_features[column]
+
+    if len(tfidf_features) > 60000:
+        tfidf_features.to_csv(params.processed_train_data_path, index=False)
+    else:
+        tfidf_features.to_csv(params.processed_test_data_path, index=False)
+
+    return tfidf_features
 
 
 
