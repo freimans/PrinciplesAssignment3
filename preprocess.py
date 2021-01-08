@@ -9,6 +9,7 @@ from nltk.stem.porter import PorterStemmer
 import params
 
 nltk.download('stopwords')
+nltk.download('punkt')
 stemmer = PorterStemmer()
 lemmatizer = WordNetLemmatizer()
 stoplist = stopwords.words('english')
@@ -29,33 +30,54 @@ def replace_dots_with_space(tweet):
 
 
 def remove_html_entities(tweet):
+    """
+    remove html tags from tweet. html tag is in the format of &XXX;
+    """
     tweet = re.sub(r"&(\w)+;", "", tweet)
     return tweet
 
 
 def remove_quot(tweet):
+    """
+    remove quot sign " and '
+    """
     tweet = re.sub(r"\'", "", tweet)
     tweet = re.sub(r"\"", "", tweet)
     return tweet
 
 
 def reduce_duplicate_last_letter(tweet):
+    """
+    reduce duplicate last letters from end of word. (amazingggg -> amazing)
+    """
     return re.sub(r'(\w)\1+\b', r'\1', tweet)
 
 
 def remove_urls(tweet):
+    """
+    remove URLs from tweet
+    """
     return re.sub(r'((www\.[\S]+)|(https?://[\S]+)).', "", tweet)
 
 
 def replace_mentions(tweet):
+    """
+    replace users mention (start with @) with generic MENTION string
+    """
     return re.sub(r'@(\S+)', ' MENTION', tweet)
 
 
 def extract_hashtags(tweet):
+    """
+    extract words from hashtags (#black_live_matters -> black live matters)
+    """
     return tweet.replace("#", "").replace("_", " ")
 
 
 def replace_abbreviation(tweet):
+    """
+    replace abbreviation with their full form
+    """
     tweet = re.sub(r"i\'m", "i am", tweet)
     tweet = re.sub(r"\'re", "are", tweet)
     tweet = re.sub(r"he\'s", "he is", tweet)
@@ -71,11 +93,17 @@ def replace_abbreviation(tweet):
 
 
 def emphasize_exclamation(tweet):
+    """
+    emphasize exclamation by duplicate the last word (so cool! -> so cool cool)
+    """
     tweet = re.sub("(\w+)!+", r'\1 \1', tweet)
     return tweet
 
 
 def remove_stopwords(tweet):
+    """
+    remove stop words using nltk stop word dictionary
+    """
     words = tweet.split()
     for i,w in enumerate(words):
         if w in stoplist:
@@ -84,11 +112,17 @@ def remove_stopwords(tweet):
 
 
 def remove_non_letters(tweet):
+    """
+    remove all non alphabetic characters
+    """
     tweet = re.sub('[^a-zA-Z]+', ' ', tweet)
     return tweet
 
 
 def lemmatize_word(word):
+    """
+    lemmatize single word
+    """
     try:
         lemmatized = lemmatizer.lemmatize(word).lower()
         return lemmatized
@@ -97,16 +131,25 @@ def lemmatize_word(word):
 
 
 def lemmatize_tweet(tweet):
+    """
+    lemmatize whole tweet
+    """
     lemmatized = [lemmatize_word(w.lower()) for w in tweet.split()]
     return " ".join(lemmatized)
 
 
 def stem_tweet(tweet):
+    """
+    stem all words in tweet
+    """
     stemmed = [stemmer.stem(w) for w in tweet.split()]
     return " ".join(stemmed)
 
 
 def preprocess(tweet):
+    """
+    call all preprocess function one by one to apply all rules on a single tweet
+    """
     clean_tweet = normalize_case(tweet)
     clean_tweet = replace_dots_with_space(clean_tweet)
     clean_tweet = remove_html_entities(clean_tweet)
