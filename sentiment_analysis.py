@@ -31,12 +31,6 @@ if params.is_preprocess:
 else:
     data = pd.read_csv(params.processed_data_path)
 
-if params.is_feature_extractor:
-    features = fe.create_features_for_tweet_df(data)
-    features.to_csv(params.data_features_path)
-else:
-    features = pd.read_csv(params.data_features_path)
-
 # build TFIDF features on train reviews
 tv = TfidfVectorizer(use_idf=True, min_df=0.0, max_df=1.0, ngram_range=(1, 2), sublinear_tf=True)
 train_tf_idf = tv.fit_transform(data['SentimentText'])
