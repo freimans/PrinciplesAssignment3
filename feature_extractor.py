@@ -1,13 +1,18 @@
 import nltk
 import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-
-import params
-import preprocess
-import numpy as np
 
 
 def create_features_from_tweet(tweet, emot_analysis_intensity, emotion_analysis, twitter_word_intensity, good_list, bad_list):
+    """
+    Create features for given tweet
+    :param tweet: dataframe of tweets
+    :param emot_analysis_intensity: good/bad emotional analysis dictionary
+    :param emotion_analysis: emotion analysis dictionary
+    :param twitter_word_intensity: good/bad emotional analysis for common words in twitter
+    :param good_list: dictionary of good words
+    :param bad_list: dictionary of bad words
+    :return: Dataframe row of features for given tweet
+    """
 
     tweet_dict = {
         'anger': 0,
@@ -49,42 +54,28 @@ def create_features_from_tweet(tweet, emot_analysis_intensity, emotion_analysis,
 
 
 def create_features_for_tweet_df(tweet_df):
-    emot_analysis_intensity = pd.read_csv('/Users/shaharfreiman/Desktop/Degree/Y4S1/Principles of Programming Languages/Assignments/Assignment3/words_dictionary/words emotion intensity.txt', sep='\t')
-    emot_analysis = pd.read_csv('/Users/shaharfreiman/Desktop/Degree/Y4S1/Principles of Programming Languages/Assignments/Assignment3/words_dictionary/word_sentiment.csv')
-    good_list = set(open('/Users/shaharfreiman/Desktop/Degree/Y4S1/Principles of Programming Languages/Assignments/Assignment3/words_dictionary/positive-words.txt', encoding="ISO-8859-1").readlines())
-    bad_list = set(open('/Users/shaharfreiman/Desktop/Degree/Y4S1/Principles of Programming Languages/Assignments/Assignment3/words_dictionary/negative-words.txt', encoding="ISO-8859-1").readlines())
-    twitter_word_intensity = pd.read_csv('/Users/shaharfreiman/Desktop/Degree/Y4S1/Principles of Programming Languages/Assignments/Assignment3/words_dictionary/twitter words to sentiment.txt', sep='\t', names=['intensity', 'word'])
-
+    """
+    Create features dataframe for given tweets dataframe
+    :param tweet_df: dataframes of tweets from twitter
+    :return: dataframe of features for each given tweet in tweets dataframe
+    """
+    emot_analysis_intensity = pd.read_csv('words_dictionary/words emotion intensity.txt', sep='\t')
+    emot_analysis = pd.read_csv('words_dictionary/word_sentiment.csv')
+    good_list = set(open('words_dictionary/positive-words.txt', encoding="ISO-8859-1").readlines())
+    bad_list = set(open('words_dictionary/negative-words.txt', encoding="ISO-8859-1").readlines())
+    twitter_word_intensity = pd.read_csv('words_dictionary/twitter words to sentiment.txt', sep='\t', names=['intensity', 'word'])
 
     tweets_features = pd.DataFrame(columns=('anger', 'anticipation', 'disgust', 'fear', 'joy', 'negative', 'positive', 'sadness', 'surprise', 'trust'))
 
-    proccessed_tweets = []
     i = 0
-    for tweet in tweet_df:
+    for index, tweet in tweet_df.iterrows():
         if i % 1000 == 0:
             print('{}/{}'.format(i, len(tweet_df)))
-        tweet_text = preprocess.preprocess(tweet)
-        proccessed_tweets.append(tweet_text)
-        tweet_feature = create_features_from_tweet(tweet_text, emot_analysis_intensity, emot_analysis, twitter_word_intensity, good_list, bad_list)
+        tweet_feature = create_features_from_tweet(tweet['SentimentText'], emot_analysis_intensity, emot_analysis, twitter_word_intensity, good_list, bad_list)
         tweets_features = tweets_features.append(tweet_feature)
-        i+=1
+        i += 1
 
-    # build TFIDF features on train reviews
-    tv = TfidfVectorizer(use_idf=True, min_df=0.0, max_df=1.0, ngram_range=(1, 2), sublinear_tf=True, max_features=2000)
-    tf_idf = tv.fit_transform(tweet_df)
-    tfidf_features = pd.DataFrame(tf_idf.toarray())
-
-    tweets_features.index = np.arange(0, len(tweets_features))
-
-    for column in tweets_features:
-        tfidf_features[column] = tweets_features[column]
-
-    if len(tfidf_features) > 60000:
-        tfidf_features.to_csv(params.processed_train_data_path, index=False)
-    else:
-        tfidf_features.to_csv(params.processed_test_data_path, index=False)
-
-    return tfidf_features
+    return tweets_features
 
 
 

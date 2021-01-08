@@ -169,12 +169,19 @@ def preprocess(tweet):
 
     return clean_tweet
 
-
-# inputt = ' @BonesFan021 #hashhg_of_words  I can\'t @BonesFan hear it! &quot;Big &amp; Rich - Between Raising Hell and Amazing Grace&quot;  The story of my life  â™« http://blip.fm/~7hdp9'
-# inputt = '&quot;pigs didn\'t start the swine flu...&quot; &quot; we didn\'t do anythingggg wrong!&quot; ... wie sï¿½ï¿½. '
-
-# print(preprocess(inputt, False, False))
-
-# stem
-# nltk.download('punkt')
-# tokens = nltk.word_tokenize(x)
+def preprocess_df(tweets_df):
+    """
+    Preprocess all of the tweets in a given dataframe
+    :param tweets_df: dataframe to preprocess
+    :return: preprocessed data
+    """
+    processed_df = pd.DataFrame(columns=['SentimentText', 'Sentiment'])
+    tweets = []
+    for index, tweet in tweets_df.iterrows():
+        tweets.append(preprocess(tweet['SentimentText']))
+    processed_df['SentimentText'] = tweets
+    try:
+        processed_df['Sentiment'] = tweets_df['Sentiment']
+    except:
+        pass
+    return processed_df

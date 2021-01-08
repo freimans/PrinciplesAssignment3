@@ -1,42 +1,54 @@
 import pandas as pd
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
 
-import feature_extractor as fe
 import params
 from sklearn import model_selection
+import feature_extractor as fe
+import preprocess as pp
 
 
 def get_models():
+    """
+    Create a list of AI models
+    :return: list of models
+    """
     models = []
     models.append(('LR', LogisticRegression(solver='liblinear', multi_class='ovr')))
-    models.append(('LDA', LinearDiscriminantAnalysis()))
-    models.append(('NB', GaussianNB()))
+    # models.append(('RFC', RandomForestClassifier(n_estimators=20, verbose=2, n_jobs=5)))
+    # models.append(('KNN', KNeighborsClassifier(n_neighbors=5)))
     return models
 
 
-data = None
 raw_data = pd.read_csv(params.raw_data_path, encoding="ISO-8859-1")
-x_train, x_test, y_train, y_test = model_selection.train_test_split(raw_data['SentimentText'], raw_data['Sentiment'], test_size=params.val_size, random_state=params.seed)
-if params.is_feature_extractor:
-    x_train = fe.create_features_for_tweet_df(x_train)
-    x_test = fe.create_features_for_tweet_df(x_test)
+kaggle_test = pd.read_csv(params.test_data_path, encoding="ISO-8859-1")
+
+if params.is_preprocess:
+    data = pp.preprocess_df(raw_data)
+    data.to_csv(params.processed_data_path)
 else:
-    x_train = pd.read_csv(params.processed_train_data_path)
-    x_test = pd.read_csv(params.processed_test_data_path)
+    data = pd.read_csv(params.processed_data_path)
+
+if params.is_feature_extractor:
+    features = fe.create_features_for_tweet_df(data)
+    features.to_csv(params.data_features_path)
+else:
+    features = pd.read_csv(params.data_features_path)
+
+# build TFIDF features on train reviews
+tv = TfidfVectorizer(use_idf=True, min_df=0.0, max_df=1.0, ngram_range=(1, 2), sublinear_tf=True)
+train_tf_idf = tv.fit_transform(data['SentimentText'])
 
 models = get_models()
 
 results = []
-names = []
-
 for name, model in models:
-    cv_results = model_selection.cross_val_score(model, x_train, y_train, cv=10, scoring=params.scoring)
-    results.append(cv_results)
-    names.append(name)
-    msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
-    print(msg)
+    kfold = model_selection.KFold(n_splits=10, random_state=42)
+    cv_results = model_selection.cross_validate(model, train_tf_idf, data['Sentiment'], cv=kfold, scoring=params.scoring)
+    results.append((name, cv_results))
+
+for result in results:
+  print(result[0] + ":")
+  print('\tAccuracy: {}\n\tPrecision: {}\n\tRecall: {}'.format(result[1]['test_accuracy'].mean(), result[1]['test_precision'].mean(), result[1]['test_precision'].mean()))
