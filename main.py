@@ -1,21 +1,39 @@
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
 
-data = pd.DataFrame(columns=('word','angr', 'anticipation', 'disgust', 'fear', 'joy', 'negative', 'positive', 'sadness', 'surprise', 'trust'))
+import params
+from sklearn import model_selection
+import feature_extractor as fe
+import preprocess as pp
+import sentiment_analysis as sa
 
-with open('/Users/shaharfreiman/Desktop/Degree/Y4S1/Principles of Programming Languages/Assignments/Assignment3/NRC-Emotion-Lexicon/NRC-Emotion-Lexicon-v0.92/NRC-Emotion-Lexicon-Wordlevel-v0.92.txt') as file:
-    line = file.readline()
-    line = file.readline()
-    line = line[0:-1]
-    elements = line.split('\t')
-    while line:
-        word = elements[0]
-        word_row = [word, elements[2]]
-        line = file.readline()
-        line = line[0:-1]
-        elements = line.split('\t')
-        while elements[0] == word:
-            word_row.append(elements[2])
-            line = file.readline()
-            line = line[0:-1]
-            elements = line.split('\t')
-        data.loc[len(data)] = word_row
+raw_data = pd.read_csv(params.raw_data_path, encoding="ISO-8859-1")
+kaggle_test = pd.read_csv(params.test_data_path, encoding="ISO-8859-1")
+
+if params.is_preprocess:
+    data = pp.preprocess_df(raw_data)
+    data.to_csv(params.processed_data_path)
+else:
+    data = pd.read_csv(params.processed_data_path)
+
+# build TFIDF features on train reviews
+tv = TfidfVectorizer(use_idf=True, min_df=0.0, max_df=1.0, ngram_range=(1, 2), sublinear_tf=True)
+train_tf_idf = tv.fit_transform(data['SentimentText'])
+
+models = sa.get_models()
+
+results = []
+for name, model in models:
+    kfold = model_selection.KFold(n_splits=10)
+    cv_results = model_selection.cross_validate(model, train_tf_idf, data['Sentiment'], cv=kfold,
+                                                scoring=params.scoring)
+    results.append((name, cv_results))
+
+for result in results:
+    print(result[0] + ":")
+    print('\tAccuracy: {}\n\tPrecision: {}\n\tRecall: {}'.format(result[1]['test_accuracy'].mean(),
+                                                                 result[1]['test_precision'].mean(),
+                                                                 result[1]['test_precision'].mean()))
